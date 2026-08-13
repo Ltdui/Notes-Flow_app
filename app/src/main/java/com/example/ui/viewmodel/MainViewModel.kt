@@ -232,13 +232,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // Note Editor Actions
-    fun createNewNote(type: String = "TEXT", categoryId: Long? = selectedCategoryId.value): NoteEntity {
+    fun createNewNote(type: String = "NOTE", categoryId: Long? = selectedCategoryId.value): NoteEntity {
         val newNote = NoteEntity(
             id = 0,
             title = "",
             content = "",
             type = type,
             categoryId = categoryId,
+            fontFamily = "DEFAULT",
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
@@ -254,15 +255,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             val note = noteRepository.getNoteById(noteId)
             if (note != null) {
                 _editingNote.value = note
-                if (note.type == "CHECKLIST") {
-                    _editingChecklist.value = parseChecklist(note.checklistJson)
-                }
-                if (note.type == "TABLE") {
-                    _editingTable.value = parseTable(note.tableJson) ?: TableData()
-                }
+                _editingChecklist.value = parseChecklist(note.checklistJson)
+                _editingTable.value = parseTable(note.tableJson) ?: TableData()
                 _autoSaveStatus.value = "Saved"
             }
         }
+    }
+
+    fun updateEditingFontFamily(fontFamily: String) {
+        val current = _editingNote.value ?: return
+        _editingNote.value = current.copy(fontFamily = fontFamily)
+        triggerAutoSave()
     }
 
     fun updateEditingTitle(title: String) {

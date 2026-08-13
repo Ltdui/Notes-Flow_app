@@ -15,19 +15,23 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.GridOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PictureAsPdf
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.PushPin
+import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -52,6 +56,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.ui.components.CategoryDialog
@@ -90,6 +95,16 @@ fun NoteEditorScreen(
     val note = editingNote ?: return
 
     val currentCategory = categories.find { it.id == note.categoryId }
+
+    val currentFontFamily = remember(note.fontFamily) {
+        when (note.fontFamily.uppercase()) {
+            "SERIF" -> FontFamily.Serif
+            "MONOSPACE" -> FontFamily.Monospace
+            "CURSIVE" -> FontFamily.Cursive
+            "SANS_SERIF" -> FontFamily.SansSerif
+            else -> FontFamily.Default
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -218,22 +233,35 @@ fun NoteEditorScreen(
             )
         },
         bottomBar = {
-            if (note.type == "TEXT" || note.type == "RICH_TEXT") {
-                RichTextToolbar(
-                    onApplyFormat = { format ->
-                        when (format) {
-                            "BOLD" -> viewModel.updateEditingContent("${note.content} **bold text**")
-                            "ITALIC" -> viewModel.updateEditingContent("${note.content} *italic text*")
-                            "UNDERLINE" -> viewModel.updateEditingContent("${note.content} <u>underlined</u>")
-                            "H1" -> viewModel.updateEditingContent("${note.content}\n# Heading 1\n")
-                            "H2" -> viewModel.updateEditingContent("${note.content}\n## Heading 2\n")
-                            "BULLET" -> viewModel.updateEditingContent("${note.content}\n- Bullet point\n")
-                            "NUMBERED" -> viewModel.updateEditingContent("${note.content}\n1. First item\n")
-                            else -> {}
-                        }
+            RichTextToolbar(
+                selectedFontFamily = note.fontFamily,
+                onFontFamilySelected = { font ->
+                    viewModel.updateEditingFontFamily(font)
+                },
+                onApplyFormat = { format ->
+                    when (format) {
+                        "BOLD" -> viewModel.updateEditingContent("${note.content} **bold text**")
+                        "ITALIC" -> viewModel.updateEditingContent("${note.content} *italic text*")
+                        "UNDERLINE" -> viewModel.updateEditingContent("${note.content} <u>underlined</u>")
+                        "H1" -> viewModel.updateEditingContent("${note.content}\n# Heading 1\n")
+                        "H2" -> viewModel.updateEditingContent("${note.content}\n## Heading 2\n")
+                        "H3" -> viewModel.updateEditingContent("${note.content}\n### Subheading\n")
+                        "BULLET" -> viewModel.updateEditingContent("${note.content}\n- Bullet point\n")
+                        "NUMBERED" -> viewModel.updateEditingContent("${note.content}\n1. First item\n")
                     }
-                )
-            }
+                },
+                onAddChecklist = {
+                    viewModel.addChecklistItem("")
+                },
+                onAddTable = {
+                    if (tableData.headers.isEmpty()) {
+                        viewModel.addTableColumn()
+                        viewModel.addTableRow()
+                    } else {
+                        viewModel.addTableRow()
+                    }
+                }
+            )
         }
     ) { paddingValues ->
         Column(
@@ -318,12 +346,20 @@ fun NoteEditorScreen(
                 }
             }
 
-            // Title Field
+            // Title Field (uses custom fontFamily)
             OutlinedTextField(
                 value = note.title,
                 onValueChange = { viewModel.updateEditingTitle(it) },
-                placeholder = { Text("Note Title", style = MaterialTheme.typography.headlineMedium) },
-                textStyle = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                placeholder = {
+                    Text(
+                        "Note Title",
+                        style = MaterialTheme.typography.headlineMedium.copy(fontFamily = currentFontFamily)
+                    )
+                },
+                textStyle = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = currentFontFamily
+                ),
                 singleLine = true,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Transparent,
@@ -336,45 +372,90 @@ fun NoteEditorScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Body based on Type
-            when (note.type) {
-                "CHECKLIST" -> {
-                    ChecklistEditor(
-                        items = checklistItems,
-                        onItemChange = { idx, text, completed ->
-                            viewModel.updateChecklistItem(idx, text, completed)
-                        },
-                        onAddItem = { viewModel.addChecklistItem() },
-                        onRemoveItem = { idx -> viewModel.removeChecklistItem(idx) }
+            // Body Text Field (uses custom fontFamily)
+            OutlinedTextField(
+                value = note.content,
+                onValueChange = { viewModel.updateEditingContent(it) },
+                placeholder = {
+                    Text(
+                        "Start typing your note... Use toolbar for Headings, Subheadings, Formatting & Font selection",
+                        style = MaterialTheme.typography.bodyLarge.copy(fontFamily = currentFontFamily)
+                    )
+                },
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = currentFontFamily),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color.Transparent,
+                    unfocusedBorderColor = Color.Transparent
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(260.dp)
+                    .testTag("editor_content_input")
+            )
+
+            // Integrated Checklist Section (shows if checklist items exist)
+            if (checklistItems.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CheckCircle,
+                        contentDescription = "Checklist",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Checklist Items",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-                "TABLE" -> {
-                    TableEditorGrid(
-                        tableData = tableData,
-                        onHeaderChange = { colIdx, text -> viewModel.updateTableHeader(colIdx, text) },
-                        onCellChange = { rowIdx, colIdx, text -> viewModel.updateTableCell(rowIdx, colIdx, text) },
-                        onAddRow = { viewModel.addTableRow() },
-                        onDeleteRow = { rowIdx -> viewModel.deleteTableRow(rowIdx) },
-                        onAddColumn = { viewModel.addTableColumn() },
-                        onDeleteColumn = { colIdx -> viewModel.deleteTableColumn(colIdx) }
+
+                ChecklistEditor(
+                    items = checklistItems,
+                    onItemChange = { idx, text, completed ->
+                        viewModel.updateChecklistItem(idx, text, completed)
+                    },
+                    onAddItem = { viewModel.addChecklistItem() },
+                    onRemoveItem = { idx -> viewModel.removeChecklistItem(idx) }
+                )
+            }
+
+            // Integrated Table Section (shows if table headers/data exist)
+            if (tableData.headers.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.GridOn,
+                        contentDescription = "Table",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Table Grid",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
                     )
                 }
-                else -> { // TEXT or RICH_TEXT
-                    OutlinedTextField(
-                        value = note.content,
-                        onValueChange = { viewModel.updateEditingContent(it) },
-                        placeholder = { Text("Start typing your note...") },
-                        textStyle = MaterialTheme.typography.bodyLarge,
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(400.dp)
-                            .testTag("editor_content_input")
-                    )
-                }
+
+                TableEditorGrid(
+                    tableData = tableData,
+                    onHeaderChange = { colIdx, text -> viewModel.updateTableHeader(colIdx, text) },
+                    onCellChange = { rowIdx, colIdx, text -> viewModel.updateTableCell(rowIdx, colIdx, text) },
+                    onAddRow = { viewModel.addTableRow() },
+                    onDeleteRow = { rowIdx -> viewModel.deleteTableRow(rowIdx) },
+                    onAddColumn = { viewModel.addTableColumn() },
+                    onDeleteColumn = { colIdx -> viewModel.deleteTableColumn(colIdx) }
+                )
             }
         }
     }

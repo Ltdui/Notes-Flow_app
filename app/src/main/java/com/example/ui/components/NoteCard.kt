@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,6 +65,14 @@ fun NoteCard(
         else fallbackColor
     } catch (e: Exception) {
         fallbackColor
+    }
+
+    val cardFontFamily = when (note.fontFamily.uppercase()) {
+        "SERIF" -> FontFamily.Serif
+        "MONOSPACE" -> FontFamily.Monospace
+        "CURSIVE" -> FontFamily.Cursive
+        "SANS_SERIF" -> FontFamily.SansSerif
+        else -> FontFamily.Default
     }
 
     Card(
@@ -100,6 +109,7 @@ fun NoteCard(
                         text = note.title.ifBlank { "Untitled Note" },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        fontFamily = cardFontFamily,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -136,15 +146,12 @@ fun NoteCard(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Content Preview
-                val previewText = when (note.type) {
-                    "CHECKLIST" -> "Checklist item list..."
-                    "TABLE" -> "Table note..."
-                    else -> note.content.ifBlank { "No additional text" }
-                }
+                val previewText = note.content.ifBlank { "No additional text" }
 
                 Text(
                     text = previewText,
                     style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = cardFontFamily,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 4,
                     overflow = TextOverflow.Ellipsis

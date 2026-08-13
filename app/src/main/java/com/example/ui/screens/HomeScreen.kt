@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Menu
@@ -29,6 +30,7 @@ import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
@@ -183,12 +185,22 @@ fun HomeScreen(
     ) {
         Scaffold(
             floatingActionButton = {
-                FabMenu(
-                    onSelectNoteType = { type ->
-                        val newNote = viewModel.createNewNote(type = type)
-                        onNavigateToEditor(newNote.id, type)
-                    }
-                )
+                FloatingActionButton(
+                    onClick = {
+                        val newNote = viewModel.createNewNote(type = "NOTE")
+                        onNavigateToEditor(newNote.id, "NOTE")
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    shape = androidx.compose.foundation.shape.CircleShape,
+                    modifier = Modifier.testTag("main_fab_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "New Note",
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
             }
         ) { paddingValues ->
             Column(

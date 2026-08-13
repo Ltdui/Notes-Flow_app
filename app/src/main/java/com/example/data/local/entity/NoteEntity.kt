@@ -39,5 +39,6 @@ data class NoteEntity(
     val updatedAt: Long = System.currentTimeMillis(),
     val checklistJson: String? = null,
     val tableJson: String? = null,
-    val richTextStylesJson: String? = null
+    val richTextStylesJson: String? = null,
+    val fontFamily: String = "DEFAULT"
 )

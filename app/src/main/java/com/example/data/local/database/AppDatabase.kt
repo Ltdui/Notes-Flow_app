@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 @Database(
     entities = [NoteEntity::class, CategoryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -33,6 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "noteflow_database"
                 )
+                    .fallbackToDestructiveMigration()
                     .addCallback(DatabaseCallback(context))
                     .build()
                 INSTANCE = instance
