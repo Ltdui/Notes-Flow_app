@@ -1,0 +1,6 @@
+{
+  "name": "NoteFlow",
+  "description": "Modern, fast, offline-first notes application with dynamic color, rich formatting, tables, checklists, categories, PDF export, and local backup.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
